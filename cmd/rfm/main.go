@@ -1,10 +1,16 @@
-# rfm
-Command-line interface to perform file management on RepRapFirmware based devices.
+package main
 
-# Usage
-```
-$ ./rfm help
-rfm provides a command-line interface to perform file actions
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/wilriker/rfm/commands"
+)
+
+func printUsage() {
+	fmt.Println(
+		`rfm provides a command-line interface to perform file actions
 against the HTTP interface of a device running RepRapFirmware.
 
 Usage:
@@ -25,5 +31,34 @@ The commands are:
         ls         Show the file tree of a given path
 
 Use "rfm <command> -help" for more information about a command's
-arguments.
-```
+arguments.`)
+}
+
+func main() {
+	var err error
+	switch os.Args[1] {
+	case "backup":
+		err = commands.DoBackup(os.Args[2:])
+	case "upload":
+		err = commands.DoUpload(os.Args[2:])
+	case "mkdir":
+		err = commands.DoMkdir(os.Args[2:])
+	case "mv":
+		err = commands.DoMv(os.Args[2:])
+	case "rm":
+		err = commands.DoRm(os.Args[2:])
+	case "download":
+		err = commands.DoDownload(os.Args[2:])
+	case "fileinfo":
+		err = commands.DoFileinfo(os.Args[2:])
+	case "ls":
+		err = commands.DoLs(os.Args[2:])
+	case "help":
+		printUsage()
+	default:
+		err = fmt.Errorf("Unknown command: %s", os.Args[1])
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+}
