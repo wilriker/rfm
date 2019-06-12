@@ -1,7 +1,7 @@
 # rfm
 Command-line interface to perform file management on RepRapFirmware based devices.
 
-# Usage
+## Usage
 ```
 $ ./rfm help
 rfm provides a command-line interface to perform file actions
@@ -27,3 +27,5 @@ The commands are:
 Use "rfm <command> -help" for more information about a command's
 arguments.
 ```
+## Feedback
+Please provide any feedback either here in the Issues or send a pull request or go to [the Duet3D forum](https://forum.duet3d.com/topic/10880/rfm-reprapfirmware-filemanager-duetbackup-successor).
