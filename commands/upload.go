@@ -93,13 +93,18 @@ func (u *upload) Upload(localPath, remotePath string) error {
 			return nil
 		}
 
-		lp := strings.TrimPrefix(path, u.o.localPath)
-		rp := rfm.CleanRemotePath(fmt.Sprintf("%s/%s", remotePath, lp))
-
 		// Directories are created automatically where necessary
 		if info.IsDir() {
 			return nil
 		}
+
+		lp := strings.TrimPrefix(path, u.o.localPath)
+		if lp == "" {
+			lp = info.Name()
+		}
+		rp := rfm.CleanRemotePath(fmt.Sprintf("%s/%s", remotePath, lp))
+
+		fmt.Println("path:", path, "\nlp:", lp, "\nremotePath:", remotePath, "\nrp:", rp)
 
 		f, err := os.Open(path)
 		if err != nil {
