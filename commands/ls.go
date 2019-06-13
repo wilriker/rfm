@@ -17,7 +17,7 @@ const (
 // LsOptions holds the specific parameters for ls
 type LsOptions struct {
 	*BaseOptions
-	path          string
+	paths         []string
 	recursive     bool
 	humanReadable bool
 }
@@ -32,9 +32,7 @@ func (l *LsOptions) Init(arguments []string) {
 	fs.BoolVar(&l.humanReadable, "h", false, "List sizes in human readable units")
 	fs.Parse(arguments)
 
-	if len(fs.Args()) > 0 {
-		l.path = fs.Arg(0)
-	}
+	l.paths = fs.Args()
 
 	l.Check()
 
@@ -44,7 +42,12 @@ func (l *LsOptions) Init(arguments []string) {
 // Check checks all parameters for valid values
 func (l *LsOptions) Check() {
 	l.BaseOptions.Check()
-	l.path = rfm.CleanRemotePath(l.path)
+	if len(l.paths) == 0 {
+		l.paths = append(l.paths, "")
+	}
+	for i := 0; i < len(l.paths); i++ {
+		l.paths[i] = rfm.CleanRemotePath(l.paths[i])
+	}
 }
 
 // DoLs is a convenience function to run ls from command-line parameters
@@ -54,12 +57,12 @@ func DoLs(arguments []string) error {
 
 	l := NewLs(lo)
 
-	return l.Ls(lo.path, lo.recursive)
+	return l.Ls(lo.paths, lo.recursive)
 }
 
 // Ls provides a single method to run a ls
 type Ls interface {
-	Ls(path string, recursive bool) error
+	Ls(paths []string, recursive bool) error
 }
 
 // ls implements the Ls interface
@@ -76,21 +79,23 @@ func NewLs(lo *LsOptions) Ls {
 
 // Ls lists all files and directories in a given remote directory,
 // optionally recursive and with human-readable sizes
-func (l *ls) Ls(path string, recursive bool) error {
-	fl, err := l.o.Rfm.Filelist(path, recursive)
-	if err != nil {
-		return err
-	}
+func (l *ls) Ls(paths []string, recursive bool) error {
+	for _, path := range paths {
+		if l.o.recursive || len(paths) > 1 {
+			fmt.Printf("\n%s:\n", path)
+		}
+		fl, err := l.o.Rfm.Filelist(path, recursive)
+		if err != nil {
+			return err
+		}
 
-	if l.o.recursive {
-		fmt.Printf("\n%s:\n", fl.Dir)
-	}
-	l.print(fl)
+		l.print(fl)
 
-	if l.o.recursive {
-		for _, subdir := range fl.Subdirs {
-			fmt.Printf("\n%s:\n", subdir.Dir)
-			l.print(subdir)
+		if l.o.recursive {
+			for _, subdir := range fl.Subdirs {
+				fmt.Printf("\n%s:\n", subdir.Dir)
+				l.print(subdir)
+			}
 		}
 	}
 

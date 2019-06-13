@@ -133,7 +133,7 @@ Parameters:
 Errors:
 If the given path is a directory or the file does not exist there will
 be an error.`
-	lsHelp = `Usage: rfm ls <common-options> [-h] [-r] [<remote/dir>]
+	lsHelp = `Usage: rfm ls <common-options> [-h] [-r] [<remote/dir>]*
 
 ls will list the contents of a remote directory.
 
@@ -142,10 +142,12 @@ Options:
         -r    List directories recursively starting at the given directory
 
 Parameters:
-		<remote/dir>    Remote directory to be listed (default: 0:/)
+		<remote/dir>    Remote directory to be listed. Can be used multiple
+                        times. (default: 0:/)
 
 Errors:
-This will return an error in case a remote file is given as <remote/dir>.`
+This will return an error in case a remote file is given as <remote/dir>
+or for the first path that is not found remote.`
 	unknownTopic = `rfm help %s: unknown help topic. Run 'rfm help'`
 )
 
