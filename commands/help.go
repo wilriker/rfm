@@ -21,8 +21,7 @@ Common options to all commands:
         -port <port>            Port the device is reachable on (default 80)
         -password <password>    Connection password (default "reprap")
         -verbose                Output more details
-		-debug                :w
-		Output details on underlying HTTP requests
+        -debug                  Output details on underlying HTTP requests
 
 The commands are:
         backup       Backup a given directory on the device
