@@ -35,6 +35,10 @@ arguments.`)
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		printUsage()
+		os.Exit(1)
+	}
 	var err error
 	switch os.Args[1] {
 	case "backup":
