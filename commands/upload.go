@@ -24,10 +24,16 @@ func (u *UploadOptions) Init(arguments []string) {
 		u.BaseOptions = &BaseOptions{}
 	}
 	fs := u.GetFlagSet()
-	fs.StringVar(&u.localPath, "localPath", "", "Local path to file or directory being uploaded")
-	fs.StringVar(&u.remotePath, "remotePath", "", "Remote name of file or directory being uploaded")
 	fs.Var(&u.excls, "exclude", "Exclude paths starting with this string (can be passed multiple times)")
 	fs.Parse(arguments)
+
+	l := len(fs.Args())
+	if l > 0 {
+		u.localPath = fs.Arg(0)
+		if l > 1 {
+			u.remotePath = fs.Arg(1)
+		}
+	}
 
 	u.Check()
 
@@ -40,9 +46,6 @@ func (u *UploadOptions) Check() {
 
 	u.localPath = rfm.GetAbsPath(u.localPath)
 	u.remotePath = rfm.CleanRemotePath(u.remotePath)
-	if u.localPath == "" || u.remotePath == "" {
-		log.Fatal("-localPath and -remotePath are mandatory")
-	}
 	u.excls.ForEach(rfm.GetAbsPath)
 }
 

@@ -23,9 +23,12 @@ func (f *FileinfoOptions) Init(arguments []string) {
 		f.BaseOptions = &BaseOptions{}
 	}
 	fs := f.GetFlagSet()
-	fs.StringVar(&f.path, "path", "", "Path of file to get information for")
 	fs.BoolVar(&f.humanReadable, "h", false, "Display size in human readable units")
 	fs.Parse(arguments)
+
+	if len(fs.Args()) > 0 {
+		f.path = fs.Arg(0)
+	}
 
 	f.Check()
 
@@ -36,10 +39,10 @@ func (f *FileinfoOptions) Init(arguments []string) {
 func (f *FileinfoOptions) Check() {
 	f.BaseOptions.Check()
 
-	f.path = rfm.CleanRemotePath(f.path)
 	if f.path == "" {
 		log.Fatal("-path is mandatory")
 	}
+	f.path = rfm.CleanRemotePath(f.path)
 }
 
 // DoFileinfo is a convenience function to run a download from command-line parameters

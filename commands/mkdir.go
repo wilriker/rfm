@@ -18,8 +18,11 @@ func (m *MkdirOptions) Init(arguments []string) {
 		m.BaseOptions = &BaseOptions{}
 	}
 	fs := m.GetFlagSet()
-	fs.StringVar(&m.path, "path", "", "Path to create")
 	fs.Parse(arguments)
+
+	if len(fs.Args()) > 0 {
+		m.path = fs.Arg(0)
+	}
 
 	m.Check()
 
@@ -30,10 +33,10 @@ func (m *MkdirOptions) Init(arguments []string) {
 func (m *MkdirOptions) Check() {
 	m.BaseOptions.Check()
 
-	m.path = rfm.CleanRemotePath(m.path)
 	if m.path == "" {
-		log.Fatal("-path is mandatory")
+		log.Fatal("remote path is mandatory")
 	}
+	m.path = rfm.CleanRemotePath(m.path)
 }
 
 // DoMkdir is a convenience function to run mkdir from command-line parameters

@@ -20,10 +20,16 @@ func (m *MvOptions) Init(arguments []string) {
 		m.BaseOptions = &BaseOptions{}
 	}
 	fs := m.GetFlagSet()
-	fs.StringVar(&m.oldpath, "oldpath", "", "Current name of the file/directory to rename/move")
-	fs.StringVar(&m.newpath, "newpath", "", "New name/location of the file/diretory to rename/move")
-	fs.BoolVar(&m.removeTarget, "overwrite", false, "Overwrite the file with <newname>")
+	fs.BoolVar(&m.removeTarget, "f", false, "Overwrite the file with <newname>")
 	fs.Parse(arguments)
+
+	l := len(fs.Args())
+	if l > 0 {
+		m.oldpath = fs.Arg(0)
+		if l > 1 {
+			m.newpath = fs.Arg(1)
+		}
+	}
 
 	m.Check()
 
@@ -34,11 +40,11 @@ func (m *MvOptions) Init(arguments []string) {
 func (m *MvOptions) Check() {
 	m.BaseOptions.Check()
 
+	if m.oldpath == "" || m.newpath == "" {
+		log.Fatal("<old/path> and <new/path> are mandatory")
+	}
 	m.oldpath = rfm.CleanRemotePath(m.oldpath)
 	m.newpath = rfm.CleanRemotePath(m.newpath)
-	if m.oldpath == "" || m.newpath == "" {
-		log.Fatal("-oldpath and -newpath are mandatory")
-	}
 }
 
 // DoMv is a convenience function to run mv from command-line parameters

@@ -21,9 +21,12 @@ func (r *RmOptions) Init(arguments []string) {
 		r.BaseOptions = &BaseOptions{}
 	}
 	fs := r.GetFlagSet()
-	fs.StringVar(&r.path, "path", "", "Path to remove")
 	fs.BoolVar(&r.recursive, "r", false, "Remove recursively")
 	fs.Parse(arguments)
+
+	if len(fs.Args()) > 0 {
+		r.path = fs.Arg(0)
+	}
 
 	r.Check()
 
@@ -34,10 +37,10 @@ func (r *RmOptions) Init(arguments []string) {
 func (r *RmOptions) Check() {
 	r.BaseOptions.Check()
 
-	r.path = rfm.CleanRemotePath(r.path)
 	if r.path == "" {
-		log.Fatal("-path is mandatory")
+		log.Fatal("<remote/path> is mandatory")
 	}
+	r.path = rfm.CleanRemotePath(r.path)
 }
 
 // DoRm is a convenience function to run rm from command-line parameters

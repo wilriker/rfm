@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/wilriker/librfm"
 	"github.com/wilriker/rfm"
@@ -29,11 +28,13 @@ func (l *LsOptions) Init(arguments []string) {
 		l.BaseOptions = &BaseOptions{}
 	}
 	fs := l.GetFlagSet()
-	fs.StringVar(&l.path, "path", "", "Directory to list")
 	fs.BoolVar(&l.recursive, "r", false, "List recursively")
 	fs.BoolVar(&l.humanReadable, "h", false, "List sizes in human readable units")
-
 	fs.Parse(arguments)
+
+	if len(fs.Args()) > 0 {
+		l.path = fs.Arg(0)
+	}
 
 	l.Check()
 
@@ -43,11 +44,7 @@ func (l *LsOptions) Init(arguments []string) {
 // Check checks all parameters for valid values
 func (l *LsOptions) Check() {
 	l.BaseOptions.Check()
-
 	l.path = rfm.CleanRemotePath(l.path)
-	if l.path == "" {
-		log.Fatal("-path is mandatory")
-	}
 }
 
 // DoLs is a convenience function to run ls from command-line parameters

@@ -14,7 +14,7 @@ import (
 const (
 	// SysDir is the location of the default configuration directory
 	SysDir           = "0:/sys"
-	managedDirMarker = ".duetbackup"
+	managedDirMarker = ".rfmbackup"
 )
 
 // BackupOptions holds all options relevant to a backup process
@@ -32,11 +32,18 @@ func (b *BackupOptions) Init(arguments []string) {
 		b.BaseOptions = &BaseOptions{}
 	}
 	fs := b.GetFlagSet()
-	fs.StringVar(&b.dirToBackup, "dirToBackup", SysDir, "Directory on Duet to create a backup of")
-	fs.StringVar(&b.outDir, "outDir", "", "Output dir of backup")
 	fs.BoolVar(&b.removeLocal, "removeLocal", false, "Remove files locally that have been deleted on the Duet")
 	fs.Var(&b.excls, "exclude", "Exclude paths starting with this string (can be passed multiple times)")
 	fs.Parse(arguments)
+
+	b.dirToBackup = SysDir
+	l := len(fs.Args())
+	if l > 0 {
+		b.outDir = fs.Arg(0)
+		if l > 1 {
+			b.dirToBackup = fs.Arg(1)
+		}
+	}
 
 	b.Check()
 
@@ -49,12 +56,6 @@ func (b *BackupOptions) Check() {
 
 	b.outDir = rfm.GetAbsPath(b.outDir)
 	b.dirToBackup = rfm.CleanRemotePath(b.dirToBackup)
-	if b.outDir == "" {
-		log.Fatal("-outDir is mandatory")
-	}
-	if b.dirToBackup == "" {
-		log.Fatal("-dirToBackup must not be empty")
-	}
 	b.excls.ForEach(rfm.CleanRemotePath)
 }
 

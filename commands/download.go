@@ -22,9 +22,15 @@ func (d *DownloadOptions) Init(arguments []string) {
 		d.BaseOptions = &BaseOptions{}
 	}
 	fs := d.GetFlagSet()
-	fs.StringVar(&d.remotePath, "remotePath", "", "Remote path of file to download")
-	fs.StringVar(&d.localName, "localName", "", "Local name of file")
 	fs.Parse(arguments)
+
+	l := len(fs.Args())
+	if l > 0 {
+		d.remotePath = fs.Arg(0)
+		if l > 1 {
+			d.localName = fs.Arg(1)
+		}
+	}
 
 	d.Check()
 
@@ -37,7 +43,7 @@ func (d *DownloadOptions) Check() {
 
 	d.remotePath = rfm.CleanRemotePath(d.remotePath)
 	if d.remotePath == "" {
-		log.Fatal("-remotePath is mandatory")
+		log.Fatal("<remote/file> is mandatory")
 	}
 
 	// Use same name as remote file if nothing is specified here
