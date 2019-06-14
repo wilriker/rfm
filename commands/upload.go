@@ -75,8 +75,7 @@ func NewUpload(uo *UploadOptions) Upload {
 
 // Upload uploads a file or directory (structure) to the given remote path
 func (u *upload) Upload(localPath, remotePath string) error {
-	var err error
-	err = filepath.Walk(u.o.localPath, func(path string, info os.FileInfo, err error) error {
+	return filepath.Walk(u.o.localPath, func(path string, info os.FileInfo, err error) error {
 		if u.o.excls.Contains(path) {
 			if info.IsDir() {
 				if u.o.verbose {
@@ -114,5 +113,4 @@ func (u *upload) Upload(localPath, remotePath string) error {
 		_, err = u.o.Rfm.Upload(rp, f)
 		return err
 	})
-	return err
 }
