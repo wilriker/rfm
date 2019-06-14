@@ -26,18 +26,26 @@ type BackupOptions struct {
 	excls       rfm.Excludes
 }
 
-// Init intializes a backupOptions instance from command line parameters
-func (b *BackupOptions) Init(arguments []string) {
-	if b.BaseOptions == nil {
-		b.BaseOptions = &BaseOptions{}
-	}
+// Check checks all parameters for valid values
+func (b *BackupOptions) Check() {
+	b.BaseOptions.Check()
+
+	b.outDir = rfm.GetAbsPath(b.outDir)
+	b.dirToBackup = rfm.CleanRemotePath(b.dirToBackup)
+	b.excls.ForEach(rfm.CleanRemotePath)
+}
+
+// InitBackupOptions intializes a backupOptions instance from command line parameters
+func InitBackupOptions(arguments []string) *BackupOptions {
+	b := BackupOptions{BaseOptions: &BaseOptions{}}
+
 	fs := b.GetFlagSet()
 	fs.BoolVar(&b.removeLocal, "removeLocal", false, "Remove files locally that have been deleted on the Duet")
 	fs.Var(&b.excls, "exclude", "Exclude paths starting with this string (can be passed multiple times)")
 	fs.Parse(arguments)
 
 	b.dirToBackup = SysDir
-	l := len(fs.Args())
+	l := fs.NArg()
 	if l > 0 {
 		b.outDir = fs.Arg(0)
 		if l > 1 {
@@ -48,34 +56,22 @@ func (b *BackupOptions) Init(arguments []string) {
 	b.Check()
 
 	b.Connect()
-}
 
-// Check checks all parameters for valid values
-func (b *BackupOptions) Check() {
-	b.BaseOptions.Check()
-
-	b.outDir = rfm.GetAbsPath(b.outDir)
-	b.dirToBackup = rfm.CleanRemotePath(b.dirToBackup)
-	b.excls.ForEach(rfm.CleanRemotePath)
+	return &b
 }
 
 // DoBackup is a convenience function to run a backup from command line parameters
 func DoBackup(arguments []string) error {
-
-	bo := &BackupOptions{}
-	bo.Init(arguments)
-
-	b := NewBackup(bo)
-
-	return b.SyncFolder(bo.dirToBackup, bo.outDir, bo.excls, bo.removeLocal)
+	bo := InitBackupOptions(arguments)
+	return NewBackup(bo).Backup(bo.dirToBackup, bo.outDir, bo.excls, bo.removeLocal)
 }
 
 // Backup provides a single method to run backups
 type Backup interface {
-	// SyncFolder will syncrhonize the contents of a remote folder to a local directory.
+	// Backup will synchronize the contents of a remote folder to a local directory.
 	// The boolean flag removeLocal decides whether or not files that have been remove
 	// remote should also be deleted locally
-	SyncFolder(remoteFolder, outDir string, excls rfm.Excludes, removeLocal bool) error
+	Backup(remoteFolder, outDir string, excls rfm.Excludes, removeLocal bool) error
 }
 
 // backup implementes the Backup interface
@@ -246,7 +242,7 @@ func (b *backup) removeDeletedFiles(fl *librfm.Filelist, outDir string) error {
 	return nil
 }
 
-func (b *backup) SyncFolder(folder, outDir string, excls rfm.Excludes, removeLocal bool) error {
+func (b *backup) Backup(folder, outDir string, excls rfm.Excludes, removeLocal bool) error {
 
 	// Skip complete directories if they are covered by an exclude pattern
 	if excls.Contains(folder) {
@@ -279,7 +275,7 @@ func (b *backup) SyncFolder(folder, outDir string, excls rfm.Excludes, removeLoc
 		}
 		remoteFilename := fmt.Sprintf("%s/%s", fl.Dir, file.Name)
 		fileName := filepath.Join(outDir, file.Name)
-		if err = b.SyncFolder(remoteFilename, fileName, excls, removeLocal); err != nil {
+		if err = b.Backup(remoteFilename, fileName, excls, removeLocal); err != nil {
 			return err
 		}
 	}

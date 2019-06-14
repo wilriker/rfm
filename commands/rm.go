@@ -15,24 +15,6 @@ type RmOptions struct {
 	recursive bool
 }
 
-// Init initializes a new RmOptions instance from command-line parameters
-func (r *RmOptions) Init(arguments []string) {
-	if r.BaseOptions == nil {
-		r.BaseOptions = &BaseOptions{}
-	}
-	fs := r.GetFlagSet()
-	fs.BoolVar(&r.recursive, "r", false, "Remove recursively")
-	fs.Parse(arguments)
-
-	if len(fs.Args()) > 0 {
-		r.path = fs.Arg(0)
-	}
-
-	r.Check()
-
-	r.Connect()
-}
-
 // Check checks all parameters for valid values
 func (r *RmOptions) Check() {
 	r.BaseOptions.Check()
@@ -43,14 +25,29 @@ func (r *RmOptions) Check() {
 	r.path = rfm.CleanRemotePath(r.path)
 }
 
+// InitRmOptions initializes a new RmOptions instance from command-line parameters
+func InitRmOptions(arguments []string) *RmOptions {
+	r := RmOptions{BaseOptions: &BaseOptions{}}
+
+	fs := r.GetFlagSet()
+	fs.BoolVar(&r.recursive, "r", false, "Remove recursively")
+	fs.Parse(arguments)
+
+	if fs.NArg() > 0 {
+		r.path = fs.Arg(0)
+	}
+
+	r.Check()
+
+	r.Connect()
+
+	return &r
+}
+
 // DoRm is a convenience function to run rm from command-line parameters
 func DoRm(arguments []string) error {
-	ro := &RmOptions{}
-	ro.Init(arguments)
-
-	r := NewRm(ro)
-
-	return r.Rm(ro.path, ro.recursive)
+	ro := InitRmOptions(arguments)
+	return NewRm(ro).Rm(ro.path, ro.recursive)
 }
 
 // Rm provides a single method ro remove a file or directory

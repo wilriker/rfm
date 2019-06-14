@@ -16,27 +16,6 @@ type DownloadOptions struct {
 	localName  string
 }
 
-// Init initializes a DownloadOptions instance from command-line parameters
-func (d *DownloadOptions) Init(arguments []string) {
-	if d.BaseOptions == nil {
-		d.BaseOptions = &BaseOptions{}
-	}
-	fs := d.GetFlagSet()
-	fs.Parse(arguments)
-
-	l := len(fs.Args())
-	if l > 0 {
-		d.remotePath = fs.Arg(0)
-		if l > 1 {
-			d.localName = fs.Arg(1)
-		}
-	}
-
-	d.Check()
-
-	d.Connect()
-}
-
 // Check checks all parameters for valid values
 func (d *DownloadOptions) Check() {
 	d.BaseOptions.Check()
@@ -54,14 +33,32 @@ func (d *DownloadOptions) Check() {
 	d.localName = rfm.GetAbsPath(d.localName)
 }
 
+// InitDownloadOptions initializes a DownloadOptions instance from command-line parameters
+func InitDownloadOptions(arguments []string) *DownloadOptions {
+	d := DownloadOptions{BaseOptions: &BaseOptions{}}
+
+	fs := d.GetFlagSet()
+	fs.Parse(arguments)
+
+	l := fs.NArg()
+	if l > 0 {
+		d.remotePath = fs.Arg(0)
+		if l > 1 {
+			d.localName = fs.Arg(1)
+		}
+	}
+
+	d.Check()
+
+	d.Connect()
+
+	return &d
+}
+
 // DoDownload is a convenience method to run a download form command-line parameters
 func DoDownload(arguments []string) error {
-	do := &DownloadOptions{}
-	do.Init(arguments)
-
-	d := NewDownload(do)
-
-	return d.Download(do.remotePath, do.localName)
+	do := InitDownloadOptions(arguments)
+	return NewDownload(do).Download(do.remotePath, do.localName)
 }
 
 // Download provides a single method to run a download

@@ -18,16 +18,24 @@ type UploadOptions struct {
 	excls      rfm.Excludes
 }
 
-// Init intitializes a new UploadOptions instance from command-line parameters
-func (u *UploadOptions) Init(arguments []string) {
-	if u.BaseOptions == nil {
-		u.BaseOptions = &BaseOptions{}
-	}
+// Check checks all parameters for valid values
+func (u *UploadOptions) Check() {
+	u.BaseOptions.Check()
+
+	u.localPath = rfm.GetAbsPath(u.localPath)
+	u.remotePath = rfm.CleanRemotePath(u.remotePath)
+	u.excls.ForEach(rfm.GetAbsPath)
+}
+
+// InitUploadOptions intitializes a new UploadOptions instance from command-line parameters
+func InitUploadOptions(arguments []string) *UploadOptions {
+	u := UploadOptions{BaseOptions: &BaseOptions{}}
+
 	fs := u.GetFlagSet()
 	fs.Var(&u.excls, "exclude", "Exclude paths starting with this string (can be passed multiple times)")
 	fs.Parse(arguments)
 
-	l := len(fs.Args())
+	l := fs.NArg()
 	if l > 0 {
 		u.localPath = fs.Arg(0)
 		if l > 1 {
@@ -38,25 +46,14 @@ func (u *UploadOptions) Init(arguments []string) {
 	u.Check()
 
 	u.Connect()
-}
 
-// Check checks all parameters for valid values
-func (u *UploadOptions) Check() {
-	u.BaseOptions.Check()
-
-	u.localPath = rfm.GetAbsPath(u.localPath)
-	u.remotePath = rfm.CleanRemotePath(u.remotePath)
-	u.excls.ForEach(rfm.GetAbsPath)
+	return &u
 }
 
 // DoUpload is a convencience function to run upload from command-line parameters
 func DoUpload(arguments []string) error {
-	uo := &UploadOptions{}
-	uo.Init(arguments)
-
-	u := NewUpload(uo)
-
-	return u.Upload(uo.localPath, uo.remotePath)
+	uo := InitUploadOptions(arguments)
+	return NewUpload(uo).Upload(uo.localPath, uo.remotePath)
 }
 
 // Upload provides a single method to run an upload

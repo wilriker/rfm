@@ -14,28 +14,6 @@ type MvOptions struct {
 	removeTarget bool
 }
 
-// Init initializes a new MvOptions instance from command-line parameters
-func (m *MvOptions) Init(arguments []string) {
-	if m.BaseOptions == nil {
-		m.BaseOptions = &BaseOptions{}
-	}
-	fs := m.GetFlagSet()
-	fs.BoolVar(&m.removeTarget, "f", false, "Overwrite the file with <newname>")
-	fs.Parse(arguments)
-
-	l := len(fs.Args())
-	if l > 0 {
-		m.oldpath = fs.Arg(0)
-		if l > 1 {
-			m.newpath = fs.Arg(1)
-		}
-	}
-
-	m.Check()
-
-	m.Connect()
-}
-
 // Check checks ll parameters for valid values
 func (m *MvOptions) Check() {
 	m.BaseOptions.Check()
@@ -47,14 +25,33 @@ func (m *MvOptions) Check() {
 	m.newpath = rfm.CleanRemotePath(m.newpath)
 }
 
+// InitMvOptions initializes a new MvOptions instance from command-line parameters
+func InitMvOptions(arguments []string) *MvOptions {
+	m := MvOptions{BaseOptions: &BaseOptions{}}
+
+	fs := m.GetFlagSet()
+	fs.BoolVar(&m.removeTarget, "f", false, "Overwrite the file with <newname>")
+	fs.Parse(arguments)
+
+	l := fs.NArg()
+	if l > 0 {
+		m.oldpath = fs.Arg(0)
+		if l > 1 {
+			m.newpath = fs.Arg(1)
+		}
+	}
+
+	m.Check()
+
+	m.Connect()
+
+	return &m
+}
+
 // DoMv is a convenience function to run mv from command-line parameters
 func DoMv(arguments []string) error {
-	mo := &MvOptions{}
-	mo.Init(arguments)
-
-	m := NewMv(mo)
-
-	return m.Mv(mo.oldpath, mo.newpath, mo.removeTarget)
+	mo := InitMvOptions(arguments)
+	return NewMv(mo).Mv(mo.oldpath, mo.newpath, mo.removeTarget)
 }
 
 // Mv provides a single method to move/rename a file/directory

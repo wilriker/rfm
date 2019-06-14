@@ -17,24 +17,6 @@ type FileinfoOptions struct {
 	humanReadable bool
 }
 
-// Init inializes a FileinfoOptions instance from command-line parameters
-func (f *FileinfoOptions) Init(arguments []string) {
-	if f.BaseOptions == nil {
-		f.BaseOptions = &BaseOptions{}
-	}
-	fs := f.GetFlagSet()
-	fs.BoolVar(&f.humanReadable, "h", false, "Display size in human readable units")
-	fs.Parse(arguments)
-
-	if len(fs.Args()) > 0 {
-		f.path = fs.Arg(0)
-	}
-
-	f.Check()
-
-	f.Connect()
-}
-
 // Check checks all parameters for valid values
 func (f *FileinfoOptions) Check() {
 	f.BaseOptions.Check()
@@ -45,14 +27,29 @@ func (f *FileinfoOptions) Check() {
 	f.path = rfm.CleanRemotePath(f.path)
 }
 
+// InitFileinfoOptions inializes a FileinfoOptions instance from command-line parameters
+func InitFileinfoOptions(arguments []string) *FileinfoOptions {
+	f := FileinfoOptions{BaseOptions: &BaseOptions{}}
+
+	fs := f.GetFlagSet()
+	fs.BoolVar(&f.humanReadable, "h", false, "Display size in human readable units")
+	fs.Parse(arguments)
+
+	if fs.NArg() > 0 {
+		f.path = fs.Arg(0)
+	}
+
+	f.Check()
+
+	f.Connect()
+
+	return &f
+}
+
 // DoFileinfo is a convenience function to run a download from command-line parameters
 func DoFileinfo(arguments []string) error {
-	fo := &FileinfoOptions{}
-	fo.Init(arguments)
-
-	f := NewFileinfo(fo)
-
-	return f.Fileinfo(fo.path)
+	fo := InitFileinfoOptions(arguments)
+	return NewFileinfo(fo).Fileinfo(fo.path)
 }
 
 // Fileinfo provides a singl method to fetch infos on a file

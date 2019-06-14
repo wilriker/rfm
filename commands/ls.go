@@ -22,23 +22,6 @@ type LsOptions struct {
 	humanReadable bool
 }
 
-// Init initializes a LsOptions instance from command-line parameters
-func (l *LsOptions) Init(arguments []string) {
-	if l.BaseOptions == nil {
-		l.BaseOptions = &BaseOptions{}
-	}
-	fs := l.GetFlagSet()
-	fs.BoolVar(&l.recursive, "r", false, "List recursively")
-	fs.BoolVar(&l.humanReadable, "h", false, "List sizes in human readable units")
-	fs.Parse(arguments)
-
-	l.paths = fs.Args()
-
-	l.Check()
-
-	l.Connect()
-}
-
 // Check checks all parameters for valid values
 func (l *LsOptions) Check() {
 	l.BaseOptions.Check()
@@ -50,14 +33,28 @@ func (l *LsOptions) Check() {
 	}
 }
 
+// InitLsOptions initializes a LsOptions instance from command-line parameters
+func InitLsOptions(arguments []string) *LsOptions {
+	l := LsOptions{BaseOptions: &BaseOptions{}}
+
+	fs := l.GetFlagSet()
+	fs.BoolVar(&l.recursive, "r", false, "List recursively")
+	fs.BoolVar(&l.humanReadable, "h", false, "List sizes in human readable units")
+	fs.Parse(arguments)
+
+	l.paths = fs.Args()
+
+	l.Check()
+
+	l.Connect()
+
+	return &l
+}
+
 // DoLs is a convenience function to run ls from command-line parameters
 func DoLs(arguments []string) error {
-	lo := &LsOptions{}
-	lo.Init(arguments)
-
-	l := NewLs(lo)
-
-	return l.Ls(lo.paths, lo.recursive)
+	lo := InitLsOptions(arguments)
+	return NewLs(lo).Ls(lo.paths, lo.recursive)
 }
 
 // Ls provides a single method to run a ls

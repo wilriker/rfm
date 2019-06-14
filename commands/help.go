@@ -150,8 +150,12 @@ or for the first path that is not found remote.`
 	unknownTopic = `rfm help %s: unknown help topic. Run 'rfm help'`
 )
 
+// NoParameters can be passed to PrintHelp if there are no further parameters
 var NoParameters []string
 
+// PrintHelp prints the help text for the appropriate command
+// or outputs an error message in case an unknown help topic
+// was requested
 func PrintHelp(arguments []string, exitCode int) {
 	if len(arguments) == 0 {
 		fmt.Println(mainHelp)
