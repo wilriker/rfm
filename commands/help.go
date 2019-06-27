@@ -20,6 +20,11 @@ Common options to all commands:
         -domain <domain|IP>     Network address of device. Mandatory parameter.
         -port <port>            Port the device is reachable on (default 80)
         -password <password>    Connection password (default "reprap")
+        -device <devicename>    This can be used to either create, update (both
+                                in combination with the above options) or load
+                                an already configured device. This makes multi-
+                                device environments easier to handle.
+                                (default "default")
         -verbose                Output more details
         -debug                  Output details on underlying HTTP requests
 
