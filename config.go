@@ -137,6 +137,9 @@ func SaveConfigs() error {
 		return err
 	}
 
+	// Explicitely close the file before renaming
+	f.Close()
+
 	// If we get here rename the temporary file to the real name
 	return os.Rename(f.Name(), filepath.Join(h, ConfigFileName))
 }
