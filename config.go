@@ -57,41 +57,36 @@ var conf = &Config{}
 var mu sync.Mutex
 
 // GetConfigs tries to read the config file and returns
-// either its contents or an empty config
+// either its contents or an empty config and in case of
+// an error also an error instance
 func GetConfigs() (*Config, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
+	// Make sure the internal map is initialized on return
+	defer conf.init()
+
 	// Get the user's home dir
 	h, err := homedir.Dir()
 	if err != nil {
-		return nil, err
+		return conf, err
 	}
 
 	// Try to open the file
 	f, err := os.Open(filepath.Join(h, ConfigFileName))
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
-	}
+	if err != nil {
 
-	// If it does not exist return an empty config
-	if os.IsNotExist(err) {
-		conf.init()
-		return conf, nil
+		// If it does not exist return an empty config
+		if os.IsNotExist(err) {
+			return conf, nil
+		}
+
+		return conf, err
 	}
 	defer f.Close()
 
-	// Read the file
-	content, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-
-	// And unmarshal it
-	if err = toml.Unmarshal(content, conf); err != nil {
-		return nil, err
-	}
-
+	// Read the file and unmarshal it
+	err = toml.NewDecoder(f).Decode(conf)
 	return conf, nil
 }
 
