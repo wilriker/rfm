@@ -24,6 +24,13 @@ func (u *UploadOptions) Check() {
 
 	u.localPath = rfm.GetAbsPath(u.localPath)
 	u.remotePath = rfm.CleanRemotePath(u.remotePath)
+
+	d := rfm.GetDevice(u.device)
+	if !u.optionsSeen["exclude"] {
+		u.excls = d.Excludes["upload"]
+	} else {
+		d.Excludes["upload"] = u.excls
+	}
 	u.excls.ForEach(rfm.GetAbsPath)
 }
 

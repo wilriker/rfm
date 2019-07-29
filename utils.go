@@ -18,17 +18,17 @@ const (
 )
 
 var multiSlashRegex = regexp.MustCompile(`/{2,}`)
-var absRemotePath = regexp.MustCompile(`^(?:[0-9]:/?|/)`)
+var absRemotePath = regexp.MustCompile(`^[0-9]:/`)
 
 // CleanRemotePath will reduce multiple consecutive slashes into one and
 // then remove a trailing slash if any.
 func CleanRemotePath(path string) string {
 	cleanedPath := strings.TrimSpace(path)
-	cleanedPath = multiSlashRegex.ReplaceAllString(cleanedPath, "/")
 	cleanedPath = strings.TrimSuffix(cleanedPath, "/")
 	if !absRemotePath.MatchString(cleanedPath) {
 		cleanedPath = defaultMount + cleanedPath
 	}
+	cleanedPath = multiSlashRegex.ReplaceAllString(cleanedPath, "/")
 	return cleanedPath
 }
 

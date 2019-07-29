@@ -32,6 +32,14 @@ func (b *BackupOptions) Check() {
 
 	b.outDir = rfm.GetAbsPath(b.outDir)
 	b.dirToBackup = rfm.CleanRemotePath(b.dirToBackup)
+
+	d := rfm.GetDevice(b.device)
+	if !b.optionsSeen["exclude"] {
+		b.excls = d.Excludes["backup"]
+	} else {
+		d.Excludes["backup"] = b.excls
+	}
+
 	b.excls.ForEach(rfm.CleanRemotePath)
 }
 

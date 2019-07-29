@@ -12,15 +12,16 @@ import (
 
 // BaseOptions is the struct holding the basic parameters common to all commands
 type BaseOptions struct {
-	device   string
-	domain   string
-	port     uint64
-	password string
-	verbose  bool
-	debug    bool
-	fs       *flag.FlagSet
-	once     sync.Once
-	Rfm      librfm.RRFFileManager
+	device      string
+	domain      string
+	port        uint64
+	password    string
+	verbose     bool
+	debug       bool
+	optionsSeen map[string]bool
+	fs          *flag.FlagSet
+	once        sync.Once
+	Rfm         librfm.RRFFileManager
 }
 
 // GetFlagSet returns the basic flag.FlagSet shared by all commands
@@ -39,46 +40,39 @@ func (b *BaseOptions) GetFlagSet() *flag.FlagSet {
 	return b.fs
 }
 
-func (b *BaseOptions) updateFromConfig() {
+func (b *BaseOptions) initOptionsSeen() {
 
-	// Find out which parameters where set by the user
-	var domainSeen, portSeen, passwordSeen bool
+	b.optionsSeen = make(map[string]bool)
 
 	// Using Visit is clumsy but the only way to find out
 	b.GetFlagSet().Visit(func(f *flag.Flag) {
-		switch f.Name {
-		case "domain":
-			domainSeen = true
-		case "port":
-			portSeen = true
-		case "password":
-			passwordSeen = true
-		}
+		b.optionsSeen[f.Name] = true
 	})
+}
 
-	c, _ := rfm.GetConfigs()
-	if c != nil {
+func (b *BaseOptions) updateFromConfig() {
+	b.initOptionsSeen()
 
-		// Existing config found
-		if d := c.GetDevice(b.device); d != nil {
-			if !domainSeen {
-				b.domain = d.Domain
-			} else {
-				d.Domain = b.domain
-			}
-			if !portSeen {
-				b.port = d.Port
-			} else {
-				d.Port = b.port
-			}
-			if !passwordSeen {
-				b.password = d.Password
-			} else {
-				d.Password = b.password
-			}
+	// Get possibly existing config
+	if d := rfm.GetDevice(b.device); d != nil {
+		if !b.optionsSeen["domain"] {
+			b.domain = d.Domain
+		} else {
+			d.Domain = b.domain
 		}
+		if !b.optionsSeen["port"] {
+			b.port = d.Port
+		} else {
+			d.Port = b.port
+		}
+		if !b.optionsSeen["password"] {
+			b.password = d.Password
+		} else {
+			d.Password = b.password
+		}
+	} else {
+		rfm.AddConfig(b.device, b.domain, b.port, b.password)
 	}
-	rfm.AddConfig(b.device, b.domain, b.port, b.password)
 }
 
 // Check checks the basic parameters for correctness
