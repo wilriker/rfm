@@ -2,6 +2,10 @@ package rfm
 
 import "strings"
 
+const (
+	resetKeyword = "reset"
+)
+
 /// Excludes contains simple starts-with patterns for upload/download excludes
 type Excludes struct {
 	Excls []string
@@ -12,6 +16,9 @@ func (e *Excludes) String() string {
 }
 
 func (e *Excludes) Set(value string) error {
+	if value == resetKeyword {
+		e.Excls = make([]string, 0)
+	}
 	e.Excls = append(e.Excls, value)
 	return nil
 }
