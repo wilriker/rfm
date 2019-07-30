@@ -221,9 +221,9 @@ func (b *backup) isManagedDirectory(basePath string, f os.FileInfo) bool {
 func (b *backup) removeDeletedFiles(fl *librfm.Filelist, outDir string) error {
 
 	// Pseudo hash-set of known remote filenames
-	existingFiles := make(map[string]struct{})
+	existingFiles := make(map[string]bool)
 	for _, f := range fl.Files {
-		existingFiles[f.Name] = struct{}{}
+		existingFiles[f.Name] = true
 	}
 
 	files, err := ioutil.ReadDir(outDir)
@@ -232,17 +232,21 @@ func (b *backup) removeDeletedFiles(fl *librfm.Filelist, outDir string) error {
 	}
 
 	for _, f := range files {
-		if _, exists := existingFiles[f.Name()]; !exists {
+		if !existingFiles[f.Name()] {
 
 			// Skip directories not managed by us as well as our marker file
-			if !b.isManagedDirectory(outDir, f) || f.Name() == managedDirMarker {
+			if (f.IsDir() && !b.isManagedDirectory(outDir, f)) || f.Name() == managedDirMarker {
 				continue
 			}
 			if err := os.RemoveAll(filepath.Join(outDir, f.Name())); err != nil {
 				return err
 			}
 			if b.o.verbose {
-				log.Println("  Removed:   ", f.Name())
+				marker := fileMarker
+				if f.IsDir() {
+					marker = dirMarker
+				}
+				log.Println("  Removed:   ", marker, f.Name())
 			}
 		}
 	}
