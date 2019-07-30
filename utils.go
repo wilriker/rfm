@@ -24,10 +24,10 @@ var absRemotePath = regexp.MustCompile(`^[0-9]:/`)
 // then remove a trailing slash if any.
 func CleanRemotePath(path string) string {
 	cleanedPath := strings.TrimSpace(path)
-	cleanedPath = strings.TrimSuffix(cleanedPath, "/")
 	if !absRemotePath.MatchString(cleanedPath) {
 		cleanedPath = defaultMount + cleanedPath
 	}
+	cleanedPath = strings.TrimSuffix(cleanedPath, "/")
 	cleanedPath = multiSlashRegex.ReplaceAllString(cleanedPath, "/")
 	return cleanedPath
 }
