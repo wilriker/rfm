@@ -107,8 +107,6 @@ func (u *upload) Upload(localPath, remotePath string) error {
 		}
 		rp := rfm.CleanRemotePath(fmt.Sprintf("%s/%s", remotePath, lp))
 
-		fmt.Println("path:", path, "\nlp:", lp, "\nremotePath:", remotePath, "\nrp:", rp)
-
 		f, err := os.Open(path)
 		if err != nil {
 			return err
