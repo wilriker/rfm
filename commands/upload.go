@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bytes"
+	"io/ioutil"
+
 	"github.com/wilriker/rfm"
 )
 
@@ -107,15 +110,14 @@ func (u *upload) Upload(localPath, remotePath string) error {
 		}
 		rp := rfm.CleanRemotePath(fmt.Sprintf("%s/%s", remotePath, lp))
 
-		f, err := os.Open(path)
+		fileContent, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
 		if u.o.verbose {
 			log.Printf("Uploading %s to %s", path, rp)
 		}
-		_, err = u.o.Rfm.Upload(rp, f)
+		_, err = u.o.Rfm.Upload(rp, bytes.NewReader(fileContent))
 		return err
 	})
 }
