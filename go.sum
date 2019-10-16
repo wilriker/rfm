@@ -13,6 +13,12 @@ github.com/pelletier/go-toml v1.4.0 h1:u3Z1r+oOXJIkxqw34zVhyPgjBsm6X2wn21NWs/HfS
 github.com/pelletier/go-toml v1.4.0/go.mod h1:PN7xzY2wHTK0K9p34ErDQMlFxa51Fk0OUruD3k1mMwo=
 github.com/wilriker/librfm v1.0.0 h1:3YcG6iL1dJNLcD/rNXeF1DPkBfeB2TgTlt7fiNQ/d2U=
 github.com/wilriker/librfm v1.0.0/go.mod h1:Gfm/qINcC5vIexqk/HRCMpEDTrXe1AaEB3Gje9TR/pM=
+github.com/wilriker/librfm v1.0.1-0.20191016114846-6e08e621e9cd h1:2bL5xs73hDpzpxZl0fTkEIii1IsG5Rr5+rN9dFmOyY0=
+github.com/wilriker/librfm v1.0.1-0.20191016114846-6e08e621e9cd/go.mod h1:Gfm/qINcC5vIexqk/HRCMpEDTrXe1AaEB3Gje9TR/pM=
+github.com/wilriker/librfm v1.0.1-0.20191016122526-e2c5e7656a9a h1:GLZNPfzU4GmHjIp25SMFVnTvDDOMca4J1CH6wpNay1c=
+github.com/wilriker/librfm v1.0.1-0.20191016122526-e2c5e7656a9a/go.mod h1:Gfm/qINcC5vIexqk/HRCMpEDTrXe1AaEB3Gje9TR/pM=
+github.com/wilriker/librfm v1.0.1 h1:HcskaDsX2vf0PMWKdSkFjAZR6UDS+7uzqFSbiKpgrgs=
+github.com/wilriker/librfm v1.0.1/go.mod h1:Gfm/qINcC5vIexqk/HRCMpEDTrXe1AaEB3Gje9TR/pM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
