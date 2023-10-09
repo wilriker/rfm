@@ -50,7 +50,9 @@ func InitBackupOptions(arguments []string) *BackupOptions {
 	fs := b.GetFlagSet()
 	fs.BoolVar(&b.removeLocal, "removeLocal", false, "Remove files locally that have been deleted on the Duet")
 	fs.Var(&b.excls, "exclude", "Exclude paths starting with this string (can be passed multiple times)")
-	fs.Parse(arguments)
+	if err := fs.Parse(arguments); err != nil {
+		log.Fatalf("Error parsing command-line arguments: %s", err)
+	}
 
 	b.dirToBackup = SysDir
 	l := fs.NArg()
