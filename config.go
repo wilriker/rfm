@@ -5,8 +5,6 @@ import (
 
 	"os"
 
-	"io/ioutil"
-
 	"sync"
 
 	"github.com/mitchellh/go-homedir"
@@ -66,7 +64,8 @@ func loadConfigs() (*Config, error) {
 		defer mu.Unlock()
 
 		// Get the user's home dir
-		h, err := homedir.Dir()
+		var h string
+		h, err = homedir.Dir()
 		if err != nil {
 			return
 		}
@@ -126,7 +125,7 @@ func SaveConfigs() error {
 	}
 
 	// Create a temporary file to not kill current contents in case of error
-	f, err := ioutil.TempFile(h, ConfigFileName)
+	f, err := os.CreateTemp(h, ConfigFileName)
 	if err != nil {
 		return err
 	}

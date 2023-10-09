@@ -1,12 +1,13 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
-	"github.com/wilriker/librfm"
+	"github.com/wilriker/librfm/v2"
 	"github.com/wilriker/rfm"
 )
 
@@ -28,7 +29,7 @@ func (f *FileinfoOptions) Check() {
 }
 
 // InitFileinfoOptions inializes a FileinfoOptions instance from command-line parameters
-func InitFileinfoOptions(arguments []string) *FileinfoOptions {
+func InitFileinfoOptions(ctx context.Context, arguments []string) *FileinfoOptions {
 	f := FileinfoOptions{BaseOptions: &BaseOptions{}}
 
 	fs := f.GetFlagSet()
@@ -41,20 +42,15 @@ func InitFileinfoOptions(arguments []string) *FileinfoOptions {
 
 	f.Check()
 
-	f.Connect()
+	f.Connect(ctx)
 
 	return &f
 }
 
 // DoFileinfo is a convenience function to run a download from command-line parameters
-func DoFileinfo(arguments []string) error {
-	fo := InitFileinfoOptions(arguments)
-	return NewFileinfo(fo).Fileinfo(fo.path)
-}
-
-// Fileinfo provides a singl method to fetch infos on a file
-type Fileinfo interface {
-	Fileinfo(path string) error
+func DoFileinfo(ctx context.Context, arguments []string) error {
+	fo := InitFileinfoOptions(ctx, arguments)
+	return NewFileinfo(fo).Fileinfo(ctx, fo.path)
 }
 
 // fileinfo implement the Fileinfo interface
@@ -63,15 +59,15 @@ type fileinfo struct {
 }
 
 // NewFileinfo creates a new instance of the Fileinfo interface
-func NewFileinfo(fo *FileinfoOptions) Fileinfo {
+func NewFileinfo(fo *FileinfoOptions) *fileinfo {
 	return &fileinfo{
 		o: fo,
 	}
 }
 
 // Fileinfo fetches information on a file and prints it to sdtout
-func (f *fileinfo) Fileinfo(path string) error {
-	fi, err := f.o.Rfm.Fileinfo(path)
+func (f *fileinfo) Fileinfo(ctx context.Context, path string) error {
+	fi, err := f.o.Rfm.Fileinfo(ctx, path)
 	if err != nil {
 		return err
 	}

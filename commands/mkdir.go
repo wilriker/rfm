@@ -1,12 +1,13 @@
 package commands
 
 import (
+	"context"
 	"log"
 
 	"github.com/wilriker/rfm"
 )
 
-//MkdirOptions hold the specific parameters for mkdir
+// MkdirOptions hold the specific parameters for mkdir
 type MkdirOptions struct {
 	*BaseOptions
 	path string
@@ -23,7 +24,7 @@ func (m *MkdirOptions) Check() {
 }
 
 // InitMkdirOptions inialies a MkdirOptions instance from command-line parameters
-func InitMkdirOptions(arguments []string) *MkdirOptions {
+func InitMkdirOptions(ctx context.Context, arguments []string) *MkdirOptions {
 	m := MkdirOptions{BaseOptions: &BaseOptions{}}
 
 	fs := m.GetFlagSet()
@@ -35,20 +36,15 @@ func InitMkdirOptions(arguments []string) *MkdirOptions {
 
 	m.Check()
 
-	m.Connect()
+	m.Connect(ctx)
 
 	return &m
 }
 
 // DoMkdir is a convenience function to run mkdir from command-line parameters
-func DoMkdir(arguments []string) error {
-	mo := InitMkdirOptions(arguments)
-	return NewMkdir(mo).Mkdir(mo.path)
-}
-
-// Mkdir provides a single method to run mkdir
-type Mkdir interface {
-	Mkdir(path string) error
+func DoMkdir(ctx context.Context, arguments []string) error {
+	mo := InitMkdirOptions(ctx, arguments)
+	return NewMkdir(mo).Mkdir(ctx, mo.path)
 }
 
 // mkdir implements the Mkdir interface
@@ -57,16 +53,16 @@ type mkdir struct {
 }
 
 // NewMkdir creates a new isntance of the Mkdir interface
-func NewMkdir(mo *MkdirOptions) Mkdir {
+func NewMkdir(mo *MkdirOptions) *mkdir {
 	return &mkdir{
 		o: mo,
 	}
 }
 
 // Mkdir creates new remote directory if it does not exist yet
-func (m *mkdir) Mkdir(path string) error {
+func (m *mkdir) Mkdir(ctx context.Context, path string) error {
 	if m.o.verbose {
 		log.Println("Creating directory", path)
 	}
-	return m.o.Rfm.Mkdir(path)
+	return m.o.Rfm.Mkdir(ctx, path)
 }

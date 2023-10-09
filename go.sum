@@ -2,5 +2,5 @@ github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
 github.com/pelletier/go-toml v1.9.5/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
-github.com/wilriker/librfm v1.0.3 h1:GBYtjzyqoweUGc9hUbjmp9gjUwThmxgHHXv7OEl5pmM=
-github.com/wilriker/librfm v1.0.3/go.mod h1:usX4O2TUX4sLAldxdBOsxRUdAr/uKEM9viQ/ssAAHtw=
+github.com/wilriker/librfm/v2 v2.0.0 h1:igWaCPWBdwvLX7Q9dq1Dw6pOquQipiWYqZpKgrNtW3s=
+github.com/wilriker/librfm/v2 v2.0.0/go.mod h1:EiK9wX9qvHFAbkaxhQvAAF47GzFWiUffPqifNWEIs/c=

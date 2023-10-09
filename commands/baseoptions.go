@@ -1,12 +1,13 @@
 package commands
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
 	"sync"
 
-	"github.com/wilriker/librfm"
+	"github.com/wilriker/librfm/v2"
 	"github.com/wilriker/rfm"
 )
 
@@ -21,7 +22,7 @@ type BaseOptions struct {
 	optionsSeen map[string]bool
 	fs          *flag.FlagSet
 	once        sync.Once
-	Rfm         librfm.RRFFileManager
+	Rfm         *librfm.RRFFileManager
 }
 
 // GetFlagSet returns the basic flag.FlagSet shared by all commands
@@ -92,9 +93,9 @@ func (b *BaseOptions) Check() {
 }
 
 // Connect initializes the connection to RepRapFirmware
-func (b *BaseOptions) Connect() {
+func (b *BaseOptions) Connect(ctx context.Context) {
 	b.Rfm = librfm.New(b.domain, b.port, b.debug)
-	if err := b.Rfm.Connect(b.password); err != nil {
+	if err := b.Rfm.Connect(ctx, b.password); err != nil {
 		log.Println("Duet currently not available")
 		os.Exit(0)
 	}

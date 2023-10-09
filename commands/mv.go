@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"log"
 
 	"github.com/wilriker/rfm"
@@ -26,7 +27,7 @@ func (m *MvOptions) Check() {
 }
 
 // InitMvOptions initializes a new MvOptions instance from command-line parameters
-func InitMvOptions(arguments []string) *MvOptions {
+func InitMvOptions(ctx context.Context, arguments []string) *MvOptions {
 	m := MvOptions{BaseOptions: &BaseOptions{}}
 
 	fs := m.GetFlagSet()
@@ -43,20 +44,15 @@ func InitMvOptions(arguments []string) *MvOptions {
 
 	m.Check()
 
-	m.Connect()
+	m.Connect(ctx)
 
 	return &m
 }
 
 // DoMv is a convenience function to run mv from command-line parameters
-func DoMv(arguments []string) error {
-	mo := InitMvOptions(arguments)
-	return NewMv(mo).Mv(mo.oldpath, mo.newpath, mo.removeTarget)
-}
-
-// Mv provides a single method to move/rename a file/directory
-type Mv interface {
-	Mv(oldpath string, newpath string, overwrite bool) error
+func DoMv(ctx context.Context, arguments []string) error {
+	mo := InitMvOptions(ctx, arguments)
+	return NewMv(mo).Mv(ctx, mo.oldpath, mo.newpath, mo.removeTarget)
 }
 
 // mv implements the Mv interface
@@ -65,27 +61,27 @@ type mv struct {
 }
 
 // NewMv creates a new instance of the Mv interface
-func NewMv(mo *MvOptions) Mv {
+func NewMv(mo *MvOptions) *mv {
 	return &mv{
 		o: mo,
 	}
 }
 
 // Mv renames or moves a file or directory within a drive
-func (m *mv) Mv(oldpath, newpath string, removeTarget bool) error {
+func (m *mv) Mv(ctx context.Context, oldpath, newpath string, removeTarget bool) error {
 	if !removeTarget {
-		return m.o.Rfm.Move(oldpath, newpath)
+		return m.o.Rfm.Move(ctx, oldpath, newpath)
 	}
 	if m.o.verbose {
 		log.Println("Checking existence of", newpath)
 	}
-	if _, err := m.o.Rfm.Fileinfo(newpath); err == nil {
+	if _, err := m.o.Rfm.Fileinfo(ctx, newpath); err == nil {
 		if m.o.verbose {
 			log.Println("Deleting", newpath)
 		}
-		if err := m.o.Rfm.Delete(newpath); err != nil {
+		if err := m.o.Rfm.Delete(ctx, newpath); err != nil {
 			return err
 		}
 	}
-	return m.o.Rfm.Move(oldpath, newpath)
+	return m.o.Rfm.Move(ctx, oldpath, newpath)
 }

@@ -1,10 +1,11 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"log"
 
-	"github.com/wilriker/librfm"
+	"github.com/wilriker/librfm/v2"
 	"github.com/wilriker/rfm"
 )
 
@@ -26,7 +27,7 @@ func (r *RmOptions) Check() {
 }
 
 // InitRmOptions initializes a new RmOptions instance from command-line parameters
-func InitRmOptions(arguments []string) *RmOptions {
+func InitRmOptions(ctx context.Context, arguments []string) *RmOptions {
 	r := RmOptions{BaseOptions: &BaseOptions{}}
 
 	fs := r.GetFlagSet()
@@ -39,20 +40,15 @@ func InitRmOptions(arguments []string) *RmOptions {
 
 	r.Check()
 
-	r.Connect()
+	r.Connect(ctx)
 
 	return &r
 }
 
 // DoRm is a convenience function to run rm from command-line parameters
-func DoRm(arguments []string) error {
-	ro := InitRmOptions(arguments)
-	return NewRm(ro).Rm(ro.path, ro.recursive)
-}
-
-// Rm provides a single method ro remove a file or directory
-type Rm interface {
-	Rm(path string, recursive bool) error
+func DoRm(ctx context.Context, arguments []string) error {
+	ro := InitRmOptions(ctx, arguments)
+	return NewRm(ro).Rm(ctx, ro.path, ro.recursive)
 }
 
 // rm impelements the Rm interface
@@ -61,7 +57,7 @@ type rm struct {
 }
 
 // NewRm creates a new instance of the Rm interface
-func NewRm(r *RmOptions) Rm {
+func NewRm(r *RmOptions) *rm {
 	return &rm{
 		o: r,
 	}
@@ -70,29 +66,29 @@ func NewRm(r *RmOptions) Rm {
 // Rm deletes a file or directory.
 // Directorries will only be removed if empty or together
 // with all their contents if recursive is true.
-func (r *rm) Rm(path string, recursive bool) error {
+func (r *rm) Rm(ctx context.Context, path string, recursive bool) error {
 	if !recursive {
 		if r.o.verbose {
 			log.Println("Deleting", path)
 		}
-		return r.o.Rfm.Delete(path)
+		return r.o.Rfm.Delete(ctx, path)
 	}
-	fl, err := r.o.Rfm.Filelist(path, true)
+	fl, err := r.o.Rfm.Filelist(ctx, path, true)
 	if err != nil {
 		return err
 	}
-	if err = r.deleteRecursive(fl); err != nil {
+	if err = r.deleteRecursive(ctx, fl); err != nil {
 		return err
 	}
 	if r.o.verbose {
 		log.Println("Deleting", fl.Dir)
 	}
-	return r.o.Rfm.Delete(fl.Dir)
+	return r.o.Rfm.Delete(ctx, fl.Dir)
 }
 
-func (r *rm) deleteRecursive(fl *librfm.Filelist) error {
+func (r *rm) deleteRecursive(ctx context.Context, fl *librfm.Filelist) error {
 	for _, f := range fl.Subdirs {
-		if err := r.deleteRecursive(f); err != nil {
+		if err := r.deleteRecursive(ctx, f); err != nil {
 			return err
 		}
 	}
@@ -101,7 +97,7 @@ func (r *rm) deleteRecursive(fl *librfm.Filelist) error {
 		if r.o.verbose {
 			log.Println("Deleting", remotePath)
 		}
-		if err := r.o.Rfm.Delete(remotePath); err != nil {
+		if err := r.o.Rfm.Delete(ctx, remotePath); err != nil {
 			return err
 		}
 	}

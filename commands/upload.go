@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -8,7 +9,6 @@ import (
 	"strings"
 
 	"bytes"
-	"io/ioutil"
 
 	"github.com/wilriker/rfm"
 )
@@ -38,7 +38,7 @@ func (u *UploadOptions) Check() {
 }
 
 // InitUploadOptions intitializes a new UploadOptions instance from command-line parameters
-func InitUploadOptions(arguments []string) *UploadOptions {
+func InitUploadOptions(ctx context.Context, arguments []string) *UploadOptions {
 	u := UploadOptions{BaseOptions: &BaseOptions{}}
 
 	fs := u.GetFlagSet()
@@ -55,20 +55,15 @@ func InitUploadOptions(arguments []string) *UploadOptions {
 
 	u.Check()
 
-	u.Connect()
+	u.Connect(ctx)
 
 	return &u
 }
 
 // DoUpload is a convencience function to run upload from command-line parameters
-func DoUpload(arguments []string) error {
-	uo := InitUploadOptions(arguments)
-	return NewUpload(uo).Upload(uo.localPath, uo.remotePath)
-}
-
-// Upload provides a single method to run an upload
-type Upload interface {
-	Upload(localPath, remotePath string) error
+func DoUpload(ctx context.Context, arguments []string) error {
+	uo := InitUploadOptions(ctx, arguments)
+	return NewUpload(uo).Upload(ctx, uo.localPath, uo.remotePath)
 }
 
 // upload implements the Upload interface
@@ -77,14 +72,14 @@ type upload struct {
 }
 
 // NewUpload creates a new instance of the Upload interface
-func NewUpload(uo *UploadOptions) Upload {
+func NewUpload(uo *UploadOptions) *upload {
 	return &upload{
 		o: uo,
 	}
 }
 
 // Upload uploads a file or directory (structure) to the given remote path
-func (u *upload) Upload(localPath, remotePath string) error {
+func (u *upload) Upload(ctx context.Context, localPath, remotePath string) error {
 	return filepath.Walk(u.o.localPath, func(path string, info os.FileInfo, err error) error {
 		if u.o.excls.Contains(path) {
 			if info.IsDir() {
@@ -110,14 +105,14 @@ func (u *upload) Upload(localPath, remotePath string) error {
 		}
 		rp := rfm.CleanRemotePath(fmt.Sprintf("%s/%s", remotePath, lp))
 
-		fileContent, err := ioutil.ReadFile(path)
+		fileContent, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
 		if u.o.verbose {
 			log.Printf("Uploading %s to %s", path, rp)
 		}
-		_, err = u.o.Rfm.Upload(rp, bytes.NewReader(fileContent))
+		_, err = u.o.Rfm.Upload(ctx, rp, bytes.NewReader(fileContent))
 		return err
 	})
 }

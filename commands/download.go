@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"log"
 	"os"
 
@@ -34,7 +35,7 @@ func (d *DownloadOptions) Check() {
 }
 
 // InitDownloadOptions initializes a DownloadOptions instance from command-line parameters
-func InitDownloadOptions(arguments []string) *DownloadOptions {
+func InitDownloadOptions(ctx context.Context, arguments []string) *DownloadOptions {
 	d := DownloadOptions{BaseOptions: &BaseOptions{}}
 
 	fs := d.GetFlagSet()
@@ -50,20 +51,15 @@ func InitDownloadOptions(arguments []string) *DownloadOptions {
 
 	d.Check()
 
-	d.Connect()
+	d.Connect(ctx)
 
 	return &d
 }
 
 // DoDownload is a convenience method to run a download form command-line parameters
-func DoDownload(arguments []string) error {
-	do := InitDownloadOptions(arguments)
-	return NewDownload(do).Download(do.remotePath, do.localName)
-}
-
-// Download provides a single method to run a download
-type Download interface {
-	Download(remotePath, localName string) error
+func DoDownload(ctx context.Context, arguments []string) error {
+	do := InitDownloadOptions(ctx, arguments)
+	return NewDownload(do).Download(ctx, do.remotePath, do.localName)
 }
 
 // download implements the Download interface
@@ -72,15 +68,15 @@ type download struct {
 }
 
 // NewDownload creates a new instance of the Download interface
-func NewDownload(do *DownloadOptions) Download {
+func NewDownload(do *DownloadOptions) *download {
 	return &download{
 		o: do,
 	}
 }
 
 // Download downloads a remote file to a local path
-func (d *download) Download(remotePath, localName string) error {
-	content, duration, err := d.o.Rfm.Download(remotePath)
+func (d *download) Download(ctx context.Context, remotePath, localName string) error {
+	content, duration, err := d.o.Rfm.Download(ctx, remotePath)
 	if err != nil {
 		return err
 	}

@@ -1,13 +1,14 @@
 package commands
 
 import (
+	"context"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 
-	"github.com/wilriker/librfm"
+	"github.com/wilriker/librfm/v2"
 	"github.com/wilriker/rfm"
 )
 
@@ -44,7 +45,7 @@ func (b *BackupOptions) Check() {
 }
 
 // InitBackupOptions intializes a backupOptions instance from command line parameters
-func InitBackupOptions(arguments []string) *BackupOptions {
+func InitBackupOptions(ctx context.Context, arguments []string) *BackupOptions {
 	b := BackupOptions{BaseOptions: &BaseOptions{}}
 
 	fs := b.GetFlagSet()
@@ -65,23 +66,15 @@ func InitBackupOptions(arguments []string) *BackupOptions {
 
 	b.Check()
 
-	b.Connect()
+	b.Connect(ctx)
 
 	return &b
 }
 
 // DoBackup is a convenience function to run a backup from command line parameters
-func DoBackup(arguments []string) error {
-	bo := InitBackupOptions(arguments)
-	return NewBackup(bo).Backup(bo.dirToBackup, bo.outDir, bo.excls, bo.removeLocal)
-}
-
-// Backup provides a single method to run backups
-type Backup interface {
-	// Backup will synchronize the contents of a remote folder to a local directory.
-	// The boolean flag removeLocal decides whether or not files that have been remove
-	// remote should also be deleted locally
-	Backup(remoteFolder, outDir string, excls rfm.Excludes, removeLocal bool) error
+func DoBackup(ctx context.Context, arguments []string) error {
+	bo := InitBackupOptions(ctx, arguments)
+	return NewBackup(bo).Backup(ctx, bo.dirToBackup, bo.outDir, bo.excls, bo.removeLocal)
 }
 
 // backup implementes the Backup interface
@@ -90,7 +83,7 @@ type backup struct {
 }
 
 // NewBackup creates a new instance of the Backup interface
-func NewBackup(bo *BackupOptions) Backup {
+func NewBackup(bo *BackupOptions) *backup {
 	return &backup{
 		o: bo,
 	}
@@ -130,7 +123,7 @@ func (b *backup) ensureOutDirExists(outDir string) error {
 	return nil
 }
 
-func (b *backup) updateLocalFiles(fl *librfm.Filelist, outDir string, excls rfm.Excludes, removeLocal bool) error {
+func (b *backup) updateLocalFiles(ctx context.Context, fl *librfm.Filelist, outDir string, excls rfm.Excludes, removeLocal bool) error {
 
 	if err := b.ensureOutDirExists(outDir); err != nil {
 		return err
@@ -160,7 +153,7 @@ func (b *backup) updateLocalFiles(fl *librfm.Filelist, outDir string, excls rfm.
 		if fi == nil || fi.ModTime().Before(file.Date()) {
 
 			// Download file
-			body, duration, err := b.o.Rfm.Download(remoteFilename)
+			body, duration, err := b.o.Rfm.Download(ctx, remoteFilename)
 			if err != nil {
 				return err
 			}
@@ -205,7 +198,7 @@ func (b *backup) updateLocalFiles(fl *librfm.Filelist, outDir string, excls rfm.
 // isManagedDirectory checks wether the given path is a directory and
 // if so if it contains the marker file. It will return false in case
 // any error has occured.
-func (b *backup) isManagedDirectory(basePath string, f os.FileInfo) bool {
+func (b *backup) isManagedDirectory(basePath string, f fs.DirEntry) bool {
 	if !f.IsDir() {
 		return false
 	}
@@ -228,27 +221,27 @@ func (b *backup) removeDeletedFiles(fl *librfm.Filelist, outDir string) error {
 		existingFiles[f.Name] = true
 	}
 
-	files, err := ioutil.ReadDir(outDir)
+	dirEntries, err := os.ReadDir(outDir)
 	if err != nil {
 		return err
 	}
 
-	for _, f := range files {
-		if !existingFiles[f.Name()] {
+	for _, de := range dirEntries {
+		if !existingFiles[de.Name()] {
 
 			// Skip directories not managed by us as well as our marker file
-			if (f.IsDir() && !b.isManagedDirectory(outDir, f)) || f.Name() == managedDirMarker {
+			if (de.IsDir() && !b.isManagedDirectory(outDir, de)) || de.Name() == managedDirMarker {
 				continue
 			}
-			if err := os.RemoveAll(filepath.Join(outDir, f.Name())); err != nil {
+			if err := os.RemoveAll(filepath.Join(outDir, de.Name())); err != nil {
 				return err
 			}
 			if b.o.verbose {
 				marker := fileMarker
-				if f.IsDir() {
+				if de.IsDir() {
 					marker = dirMarker
 				}
-				log.Println("  Removed:   ", marker, f.Name())
+				log.Println("  Removed:   ", marker, de.Name())
 			}
 		}
 	}
@@ -256,7 +249,10 @@ func (b *backup) removeDeletedFiles(fl *librfm.Filelist, outDir string) error {
 	return nil
 }
 
-func (b *backup) Backup(folder, outDir string, excls rfm.Excludes, removeLocal bool) error {
+// Backup will synchronize the contents of a remote folder to a local directory.
+// The boolean flag removeLocal decides whether or not files that have been remove
+// remote should also be deleted locally
+func (b *backup) Backup(ctx context.Context, folder, outDir string, excls rfm.Excludes, removeLocal bool) error {
 
 	// Skip complete directories if they are covered by an exclude pattern
 	if excls.Contains(folder) {
@@ -265,13 +261,13 @@ func (b *backup) Backup(folder, outDir string, excls rfm.Excludes, removeLocal b
 	}
 
 	log.Println("Fetching filelist for", folder)
-	fl, err := b.o.Rfm.Filelist(folder, false)
+	fl, err := b.o.Rfm.Filelist(ctx, folder, false)
 	if err != nil {
 		return err
 	}
 
 	log.Println("Downloading new/changed files from", folder, "to", outDir)
-	if err = b.updateLocalFiles(fl, outDir, excls, removeLocal); err != nil {
+	if err = b.updateLocalFiles(ctx, fl, outDir, excls, removeLocal); err != nil {
 		return err
 	}
 
@@ -289,7 +285,7 @@ func (b *backup) Backup(folder, outDir string, excls rfm.Excludes, removeLocal b
 		}
 		remoteFilename := fmt.Sprintf("%s/%s", fl.Dir, file.Name)
 		fileName := filepath.Join(outDir, file.Name)
-		if err = b.Backup(remoteFilename, fileName, excls, removeLocal); err != nil {
+		if err = b.Backup(ctx, remoteFilename, fileName, excls, removeLocal); err != nil {
 			return err
 		}
 	}

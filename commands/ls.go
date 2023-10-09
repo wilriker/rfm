@@ -1,9 +1,10 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/wilriker/librfm"
+	"github.com/wilriker/librfm/v2"
 	"github.com/wilriker/rfm"
 )
 
@@ -34,7 +35,7 @@ func (l *LsOptions) Check() {
 }
 
 // InitLsOptions initializes a LsOptions instance from command-line parameters
-func InitLsOptions(arguments []string) *LsOptions {
+func InitLsOptions(ctx context.Context, arguments []string) *LsOptions {
 	l := LsOptions{BaseOptions: &BaseOptions{}}
 
 	fs := l.GetFlagSet()
@@ -46,20 +47,15 @@ func InitLsOptions(arguments []string) *LsOptions {
 
 	l.Check()
 
-	l.Connect()
+	l.Connect(ctx)
 
 	return &l
 }
 
 // DoLs is a convenience function to run ls from command-line parameters
-func DoLs(arguments []string) error {
-	lo := InitLsOptions(arguments)
-	return NewLs(lo).Ls(lo.paths, lo.recursive)
-}
-
-// Ls provides a single method to run a ls
-type Ls interface {
-	Ls(paths []string, recursive bool) error
+func DoLs(ctx context.Context, arguments []string) error {
+	lo := InitLsOptions(ctx, arguments)
+	return NewLs(lo).Ls(ctx, lo.paths, lo.recursive)
 }
 
 // ls implements the Ls interface
@@ -68,7 +64,7 @@ type ls struct {
 }
 
 // NewLs creates new instance of the Ls interface
-func NewLs(lo *LsOptions) Ls {
+func NewLs(lo *LsOptions) *ls {
 	return &ls{
 		o: lo,
 	}
@@ -76,12 +72,12 @@ func NewLs(lo *LsOptions) Ls {
 
 // Ls lists all files and directories in a given remote directory,
 // optionally recursive and with human-readable sizes
-func (l *ls) Ls(paths []string, recursive bool) error {
+func (l *ls) Ls(ctx context.Context, paths []string, recursive bool) error {
 	for _, path := range paths {
 		if l.o.recursive || len(paths) > 1 {
 			fmt.Printf("\n%s:\n", path)
 		}
-		fl, err := l.o.Rfm.Filelist(path, recursive)
+		fl, err := l.o.Rfm.Filelist(ctx, path, recursive)
 		if err != nil {
 			return err
 		}
